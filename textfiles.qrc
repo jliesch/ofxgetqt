@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>ofxget/requests/accounts.txt</file>
+        <file>ofxget/requests/badrequest.txt</file>
+        <file>ofxget/requests/bank.txt</file>
+        <file>ofxget/requests/investment.txt</file>
+        <file>ofxget/requests/investment203.txt</file>
+    </qresource>
+</RCC>
