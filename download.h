@@ -21,7 +21,7 @@ class Download : public QWidget
     Q_OBJECT
 
 public:
-    explicit Download(const ofx_get::Institution* inst,
+    explicit Download(const ofxget::Institution* inst,
                       OfxGetMainWindow* main_window, QWidget *parent = 0);
     ~Download();
 
@@ -32,9 +32,9 @@ public slots:
 
 private:
     Ui::Download *ui_;
-    const ofx_get::Institution* institution_;
+    const ofxget::Institution* institution_;
     OfxGetMainWindow* main_;
-    ofx_get::VarsMap vars_;
+    ofxget::OfxGetContext ofxget_context_;
     std::map<std::string, std::string> acct_ids_;
     std::map<std::string, std::string> user_vars_;
     QString response_;

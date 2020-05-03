@@ -7,14 +7,14 @@
 #include "ofxget/ofxhome.h"
 #include "ofxhomeworker.h"
 
-using namespace ofx_get;
+using ofxget::ValidateApiKey;
 using std::string;
 
 void OfxHomeController::ofxRequest(
-        const Download* download, const string& request, const string& url)
+        const Download* download, const ofxget::OfxGetContext& context)
 {
     assert(request_worker_ == nullptr);
-    request_worker_ = new OfxRequestWorker(request, url);
+    request_worker_ = new OfxRequestWorker(context);
     connect(request_worker_, &OfxRequestWorker::finished,
             request_worker_, &QObject::deleteLater);
     connect(request_worker_, &OfxRequestWorker::ofxResponse,
@@ -46,10 +46,11 @@ void OfxRequestWorker::run()
     try {
         string resp;
         string headers;
-        if (PostRequest(request_, url_, &resp, &headers)) {
-            emit ofxResponse(resp.c_str(), headers.c_str(), true);
+        context_.PostRequest();
+        if (!context_.is_error()) {
+            emit ofxResponse(context_.response().c_str(), headers.c_str(), true);
         } else {
-            emit ofxResponse(resp.c_str(), headers.c_str(), false);
+            emit ofxResponse(context_.error_string_.c_str(), headers.c_str(), false);
         }
     } catch(const string& msg) {
         emit ofxResponse(msg.c_str(), "", false);

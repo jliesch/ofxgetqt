@@ -45,6 +45,7 @@ SOURCES += \
 
 HEADERS += \
     ofxget/ofxget.h \
+    ofxget/ofxget_apps.h \
     ofxget/ofxhome.h \
     ofxget/pugixml/pugiconfig.hpp \
     ofxget/pugixml/pugixml.hpp \

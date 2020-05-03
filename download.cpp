@@ -12,7 +12,9 @@
 
 #include "ofxget/ofxget.h"
 
-using namespace ofx_get;
+using ofxget::Institution;
+using ofxget::GetMissingRequestVars;
+using ofxget::UploadSuccessfulRequest;
 using std::string;
 using std::vector;
 
@@ -35,7 +37,7 @@ Download::Download(const Institution* inst, OfxGetMainWindow* main_window,
             this,
             SLOT(LoadRequest(const QString&)));
 
-    QStringList request_files = QDir(":/requests/").entryList();
+    QStringList request_files = QDir(":/ofxget/requests/").entryList();
     for (int i = 0; i < request_files.size(); ++i) {
         ui_->requestTypes->addItem(QString(request_files.at(i)).replace(".txt", ""));
     }
@@ -69,7 +71,7 @@ bool Download::eventFilter(QObject* obj, QEvent* event) {
 }
 
 void Download::LoadRequest(const QString& req) {
-    QFile request(":/requests/" + req + ".txt");
+    QFile request(":/ofxget/requests/" + req + ".txt");
     string request_string;
     if (request.open(QFile::ReadOnly)) {
         QTextStream in(&request);
@@ -82,23 +84,24 @@ void Download::LoadRequest(const QString& req) {
         main_->showError("Could not read query file");
     }
 
-    InitVars(&vars_);
-    AddApp(&vars_, "Quicken_2011");
+    ofxget_context_.Reset();
+    ofxget_context_.AddApp("Quicken_2011");
+    ofxget_context_.AddRequestTemplate(request_string);
     if (institution_ && institution_->bankid != "") {
-        vars_["BANKID"] = institution_->bankid;
+        ofxget_context_.vars_map_["BANKID"] = institution_->bankid;
     }
     if (institution_ && institution_->brokerid != "") {
-        vars_["BROKERID"] = institution_->brokerid;
+        ofxget_context_.vars_map_["BROKERID"] = institution_->brokerid;
     }
     if (institution_ && institution_->fid != "") {
-        vars_["FID"] = institution_->fid;
+        ofxget_context_.vars_map_["FID"] = institution_->fid;
     }
     if (institution_ && institution_->org != "") {
-        vars_["ORG"] = institution_->org;
+        ofxget_context_.vars_map_["ORG"] = institution_->org;
     }
-    vector<string> missing = GetMissingRequestVars(request_string, vars_);
+    vector<string> missing = GetMissingRequestVars(request_string, ofxget_context_.vars_map_);
     for (const string& m : missing) {
-        vars_[m] = "";
+        ofxget_context_.vars_map_[m] = "";
         if (user_vars_.count(m) == 0) {
             user_vars_[m] = "";
         }
@@ -127,14 +130,14 @@ void Download::VarsToWidget() {
     VarsWidget* varsTable = this->findChild<VarsWidget*>("vars");
     if (varsTable) {
         varsTable->clearContents();
-        varsTable->setRowCount(vars_.size());
+        varsTable->setRowCount(ofxget_context_.vars_map_.size());
         varsTable->setColumnCount(2);
         varsTable->horizontalHeader()->hide();
         varsTable->verticalHeader()->hide();
         varsTable->horizontalHeader()->setStretchLastSection(true);
         // First pass for user vars.
         int i = 0;
-        for (const auto& it : vars_) {
+        for (const auto& it : ofxget_context_.vars_map_) {
             if (it.second.empty() || user_vars_.count(it.first) > 0) {
                 if (user_vars_.count(it.first) == 0) {
                     user_vars_[it.first] = "";
@@ -175,7 +178,7 @@ void Download::VarsToWidget() {
             }
         }
         // Next fill in non-user vars.
-        for (const auto& it : vars_) {
+        for (const auto& it : ofxget_context_.vars_map_) {
             if (!(it.second.empty() || user_vars_.count(it.first) > 0)) {
                 varsTable->setCellWidget(i, 0, new QLabel(it.first.c_str()));
                 varsTable->cellWidget(i, 0)->setStyleSheet("padding-left: 5px");
@@ -216,15 +219,15 @@ void Download::DoDownload() {
             value = ((QLineEdit*) valueWidget)->text().toStdString();
         }
         if (!value.empty()) {
-            if (vars_[var] != value) {
+            if (ofxget_context_.vars_map_[var] != value) {
                 user_vars_[var] = value;
             }
-            vars_[var] = value;
+            ofxget_context_.vars_map_[var] = value;
         }
     }
-    vector<string> missing = GetMissingRequestVars(request_string, vars_);
+    vector<string> missing = GetMissingRequestVars(request_string, ofxget_context_.vars_map_);
     for (const string& m : missing) {
-        vars_[m] = "";
+        ofxget_context_.vars_map_[m] = "";
         user_vars_[m] = "";
     }
     VarsToWidget();
@@ -236,6 +239,7 @@ void Download::DoDownload() {
 
     QLineEdit* urlLabel = this->findChild<QLineEdit*>("url");
     string url = urlLabel->text().toStdString();
+    ofxget_context_.vars_map_["URL"] = url;
 
     string request;
     response_ = "__waiting__";
@@ -246,8 +250,7 @@ void Download::DoDownload() {
         // Build and send request to OfxHomeController. response_ and success_
         // will be set by the ofxResponse slot. We wait until there is a
         // response or until the operation is aborted.
-        request = BuildRequest(request_string, vars_);
-        controller.ofxRequest(this, request, url);
+        controller.ofxRequest(this, ofxget_context_);
         QElapsedTimer timer;
         timer.start();
         while (response_ == "__waiting__" && waiting.result() != -1) {

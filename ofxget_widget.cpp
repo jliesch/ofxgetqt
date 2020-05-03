@@ -9,7 +9,9 @@
 #include "ofxget/ofxhome.h"
 #include "ofxhomeworker.h"
 
-using namespace ofx_get;
+using ofxget::Institution;
+using ofxget::OfxDumpStringToInstitutions;
+using ofxget::OfxHomeFullDumpString;
 using std::string;
 
 OfxGet::OfxGet(QWidget *main_window) :

@@ -31,8 +31,8 @@ public slots:
 private:
     OfxGetMainWindow* main_window_;
     Ui::OfxGet *ui_;
-    std::vector<ofx_get::Institution> institutions_;
-    const ofx_get::Institution* selected_institution_;
+    std::vector<ofxget::Institution> institutions_;
+    const ofxget::Institution* selected_institution_;
 
     void clearSelection();
 };

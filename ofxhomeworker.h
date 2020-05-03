@@ -5,6 +5,7 @@
 #include <QThread>
 
 #include "download.h"
+#include "ofxget/ofxget.h"
 #include "preferences.h"
 
 class OfxHomeWorker : public QThread
@@ -19,13 +20,12 @@ class OfxRequestWorker : public OfxHomeWorker
 {
     Q_OBJECT
 public:
-    explicit OfxRequestWorker(
-        const std::string& request, const std::string& url) :
-            request_(request), url_(url) {}
+    explicit OfxRequestWorker(const ofxget::OfxGetContext& context) :
+            context_(context) {}
     virtual void run() override;
 private:
-    std::string request_;
-    std::string url_;
+    ofxget::OfxGetContext context_;
+
 signals:
     void ofxResponse(const QString&, const QString&, bool);
 };
@@ -49,8 +49,7 @@ public:
     // Sends on OFX request. Response is emitted by the
     // ofxResponse(const QString& response, bool success) signal.
     void ofxRequest(
-        const Download* download, const std::string& request,
-        const std::string& url);
+        const Download* downloa, const ofxget::OfxGetContext& context);
 
     // Disconnect the ofxResponse signal.
     void cancelOfxRequest(const Download* download);

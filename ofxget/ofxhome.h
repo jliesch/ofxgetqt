@@ -5,46 +5,49 @@
 #include <string>
 #include <vector>
 
-namespace ofx_get {
+using std::map;
+using std::string;
+using std::vector;
+
+namespace ofxget {
 
 struct Institution {
     int ofxhome_id;
-    std::string name;
-    std::string fid;
-    std::string org;
-    std::string url;
+    string name;
+    string fid;
+    string org;
+    string url;
     int ofxfail;
     int sslfail;
-    std::string lastofxvalidation;
-    std::string lastsslvalidation;
-    std::string brokerid;
-    std::string bankid;
-    std::map<std::string, std::string> profile;
+    string lastofxvalidation;
+    string lastsslvalidation;
+    string brokerid;
+    string bankid;
+    map<string, string> profile;
 
     friend std::ostream& operator<<(std::ostream& stream,
                                     const Institution& inst);
 };
 
-std::string OfxHomeFullDumpString();
+string OfxHomeFullDumpString();
 
-std::vector<Institution> OfxDumpStringToInstitutions(const std::string& dump);
+vector<Institution> OfxDumpStringToInstitutions(const string& dump);
 
 const Institution* FindInstitutionByName(
-    const std::vector<Institution>& institutions,
-    const std::string& name);
+    const vector<Institution>& institutions,
+    const string& name);
+
+
+// Upload a successful request to OFX Home. The request string will be sanitized
+// server side, however, to be safe AnonymizeRequest is called beforehand.
+string UploadSuccessfulRequest(const string& api_key, const string& url, const string& request);
 
 // Returns true if the api_key is avalid.
 bool ValidateApiKey(const std::string& api_key);
 
-// Uploads a successful request to OFX Home. The request string will be sanitized
-// server side, however, to be safe AnonymizeRequest is called beforehand.
-std::string UploadSuccessfulRequest(
-    const std::string& api_key, const std::string& url,
-    const std::string& request);
+// Remove any personal information from USERID, ACCTID, and USERPASS fields.
+string AnonymizeRequest(const string& request);
 
-// Removes any personal information from USERID, ACCTID, and USERPASS fields.
-std::string AnonymizeRequest(const std::string& request);
-
-}  // namespace ofx_get
+}  // namespace ofxget
 
 #endif // OFXHOME_H
